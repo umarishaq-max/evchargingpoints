@@ -3,78 +3,85 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>EVChargingPoints.Live</title>
+<title>EV Charging Points UK</title>
+<link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css"/>
 <style>
-  body { font-family: Arial, sans-serif; margin:0; padding:0; background:#f5f5f5; }
-  header { background:#004aad; color:#fff; padding:50px 20px; text-align:center; }
-  header h1 { margin:0; font-size:2.5em; }
-  header p { font-size:1.2em; }
-  .map-container { display:flex; justify-content:center; margin:40px 0; }
-  .map { width:90%; max-width:900px; height:450px; background:#cce5ff; position:relative; border-radius:12px; }
-  .icon { position:absolute; width:50px; height:50px; cursor:pointer; font-size:2em; text-align:center; }
-  .tooltip { position:absolute; background:#fff; padding:5px 10px; border:1px solid #aaa; display:none; border-radius:5px; font-size:0.9em; }
-  .features { display:flex; flex-wrap:wrap; justify-content:space-around; margin:40px 20px; text-align:center; }
-  .features div { background:#fff; padding:20px; border-radius:10px; width:28%; margin:10px 0; box-shadow:0 2px 8px rgba(0,0,0,0.1);}
-  footer { background:#222; color:#fff; text-align:center; padding:20px; }
-  .cta-button { background:#ffcc00; color:#004aad; padding:12px 24px; border:none; border-radius:8px; cursor:pointer; font-size:1.1em; margin-top:20px; }
+  body { font-family: Arial, sans-serif; margin: 0; padding: 0; }
+  header { background: #1a73e8; color: white; padding: 1rem; text-align: center; }
+  h1 { margin: 0; font-size: 1.8rem; }
+  #map { height: 70vh; width: 100%; }
+  .controls { padding: 1rem; text-align: center; }
+  .coming-soon { padding: 1rem; text-align: center; background: #f2f2f2; }
+  input, select, button { padding: 0.5rem; margin: 0.3rem; }
 </style>
 </head>
 <body>
 
 <header>
-  <h1>Find EV Charging Points in the UK</h1>
-  <p>Explore verified chargers across the UK with live availability.</p>
-  <button class="cta-button" onclick="alert('Scroll down to map!')">Find a Charger</button>
+  <h1>EV Charging Points UK</h1>
 </header>
 
-<div class="map-container">
-  <div class="map" id="worldMap">
-    <!-- Clickable icons for countries -->
-    <div class="icon" id="uk" style="top:150px; left:350px;" title="Click to search UK cities">⚡</div>
-    <div class="icon" id="uae" style="top:250px; left:650px;" title="Coming Soon">⚡</div>
-    <div class="icon" id="ksa" style="top:300px; left:620px;" title="Coming Soon">⚡</div>
-    <div class="tooltip" id="tooltip"></div>
-  </div>
+<div class="controls">
+  <label for="city">Select UK City:</label>
+  <select id="city">
+    <option value="">--Choose a city--</option>
+    <option value="London">London</option>
+    <option value="Manchester">Manchester</option>
+    <option value="Birmingham">Birmingham</option>
+    <option value="Glasgow">Glasgow</option>
+    <option value="Liverpool">Liverpool</option>
+  </select>
+  <button id="showBtn">Show Chargers</button>
 </div>
 
-<div class="features">
-  <div>
-    <h3>Live Availability</h3>
-    <p>See which chargers are free or in use in real-time.</p>
-  </div>
-  <div>
-    <h3>Community Verified</h3>
-    <p>Help keep charger info accurate by adding or updating locations.</p>
-  </div>
-  <div>
-    <h3>Fleet & Operators</h3>
-    <p>List your stations and gain visibility with drivers.</p>
-  </div>
+<div id="map"></div>
+
+<div class="coming-soon">
+  <h2>Coming Soon: UAE & Saudi Arabia</h2>
+  <p>Subscribe to get notified when we launch!</p>
+  <input type="email" id="email" placeholder="Enter your email"/>
+  <button id="subscribeBtn">Subscribe</button>
 </div>
 
-<footer>
-  &copy; 2025 EVChargingPoints.Live | Privacy | Terms | Contact
-</footer>
-
+<script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
 <script>
-  const tooltip = document.getElementById('tooltip');
-  document.querySelectorAll('.icon').forEach(icon => {
-    icon.addEventListener('mouseover', (e) => {
-      tooltip.style.display = 'block';
-      tooltip.style.top = e.target.offsetTop - 40 + 'px';
-      tooltip.style.left = e.target.offsetLeft + 'px';
-      tooltip.innerText = e.target.title;
-    });
-    icon.addEventListener('mouseout', () => { tooltip.style.display = 'none'; });
-    icon.addEventListener('click', () => {
-      if(icon.id === 'uk'){
-        alert('Open UK city search + map here!');
-      } else {
-        alert('Coming Soon! Subscribe for updates.');
-      }
-    });
-  });
-</script>
+  const map = L.map('map').setView([54.5, -3], 5);
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution: '© OpenStreetMap contributors'
+  }).addTo(map);
 
-</body>
-</html>
+  let markers = [];
+
+  const cityCoords = {
+      "London": [51.5074, -0.1278],
+      "Manchester": [53.4808, -2.2426],
+      "Birmingham": [52.4862, -1.8904],
+      "Glasgow": [55.8642, -4.2518],
+      "Liverpool": [53.4084, -2.9916]
+  };
+
+  document.getElementById('showBtn').addEventListener('click', async () => {
+      const city = document.getElementById('city').value;
+      if (!city) return alert('Please select a city');
+
+      // Clear previous markers
+      markers.forEach(m => map.removeLayer(m));
+      markers = [];
+
+      map.setView(cityCoords[city], 12);
+
+      try {
+          const res = await fetch(`https://api.openchargemap.io/v3/poi/?output=json&countrycode=GB&latitude=${cityCoords[city][0]}&longitude=${cityCoords[city][1]}&maxresults=20`);
+          const data = await res.json();
+
+          if (!data.length) return alert('No chargers found in this city');
+
+          data.forEach(point => {
+              const lat = point.AddressInfo.Latitude;
+              const lon = point.AddressInfo.Longitude;
+              const marker = L.marker([lat, lon]).addTo(map);
+              marker.bindPopup(`<b>${point.AddressInfo.Title}</b><br>${point.AddressInfo.AddressLine1 || ''}`);
+              markers.push(marker);
+          });
+      } catch(err) {
+          alert('Error loading EV charge
