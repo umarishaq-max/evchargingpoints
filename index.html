@@ -3,25 +3,24 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>EV Charging Points UK</title>
+<title>EV Charging Points</title>
 <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css"/>
 <style>
   body { font-family: Arial, sans-serif; margin: 0; padding: 0; }
   header { background: #1a73e8; color: white; padding: 1rem; text-align: center; }
   h1 { margin: 0; font-size: 1.8rem; }
-  #map { height: 70vh; width: 100%; }
-  .controls { padding: 1rem; text-align: center; }
-  .coming-soon { padding: 1rem; text-align: center; background: #f2f2f2; }
-  input, select, button { padding: 0.5rem; margin: 0.3rem; }
+  #map { height: 80vh; width: 100%; }
+  .controls, .coming-soon { padding: 1rem; text-align: center; }
+  select, button { padding: 0.5rem; margin: 0.3rem; }
 </style>
 </head>
 <body>
 
 <header>
-  <h1>EV Charging Points UK</h1>
+  <h1>EV Charging Points</h1>
 </header>
 
-<div class="controls">
+<div class="controls" id="ukControls" style="display:none;">
   <label for="city">Select UK City:</label>
   <select id="city">
     <option value="">--Choose a city--</option>
@@ -37,21 +36,39 @@
 <div id="map"></div>
 
 <div class="coming-soon">
-  <h2>Coming Soon: UAE & Saudi Arabia</h2>
-  <p>Subscribe to get notified when we launch!</p>
+  <h2>Subscribe for Updates</h2>
+  <p>Get notified when we launch in UAE & Saudi Arabia!</p>
   <input type="email" id="email" placeholder="Enter your email"/>
   <button id="subscribeBtn">Subscribe</button>
 </div>
 
 <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
 <script>
-  const map = L.map('map').setView([54.5, -3], 5);
+  const map = L.map('map').setView([20, 0], 2); // World view
   L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
       attribution: '© OpenStreetMap contributors'
   }).addTo(map);
 
-  let markers = [];
+  // Regions with clickable markers
+  const regions = [
+    { name: "UK", coords: [54.5, -3], zoom: 5, type: "interactive" },
+    { name: "UAE", coords: [24.4539, 54.3773], zoom: 6, type: "coming" },
+    { name: "Saudi Arabia", coords: [24.7136, 46.6753], zoom: 5, type: "coming" }
+  ];
 
+  regions.forEach(region => {
+      const marker = L.marker(region.coords).addTo(map);
+      marker.bindPopup(`<b>${region.name}</b><br>Click to explore`).on('click', () => {
+          if (region.type === "interactive") {
+              document.getElementById('ukControls').style.display = 'block';
+              map.setView(region.coords, 6);
+          } else {
+              alert(`${region.name} coming soon! Subscribe to get notified.`);
+          }
+      });
+  });
+
+  // UK city map setup
   const cityCoords = {
       "London": [51.5074, -0.1278],
       "Manchester": [53.4808, -2.2426],
@@ -60,28 +77,14 @@
       "Liverpool": [53.4084, -2.9916]
   };
 
+  const apiKey = "9e32798c-5e2f-4146-bb18-5870fd74e0ec";
+  let markers = [];
+
   document.getElementById('showBtn').addEventListener('click', async () => {
       const city = document.getElementById('city').value;
       if (!city) return alert('Please select a city');
 
-      // Clear previous markers
       markers.forEach(m => map.removeLayer(m));
       markers = [];
 
-      map.setView(cityCoords[city], 12);
-
-      try {
-          const res = await fetch(`https://api.openchargemap.io/v3/poi/?output=json&countrycode=GB&latitude=${cityCoords[city][0]}&longitude=${cityCoords[city][1]}&maxresults=20`);
-          const data = await res.json();
-
-          if (!data.length) return alert('No chargers found in this city');
-
-          data.forEach(point => {
-              const lat = point.AddressInfo.Latitude;
-              const lon = point.AddressInfo.Longitude;
-              const marker = L.marker([lat, lon]).addTo(map);
-              marker.bindPopup(`<b>${point.AddressInfo.Title}</b><br>${point.AddressInfo.AddressLine1 || ''}`);
-              markers.push(marker);
-          });
-      } catch(err) {
-          alert('Error loading EV charge
+      const
