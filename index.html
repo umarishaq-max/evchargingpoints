@@ -61,7 +61,6 @@
 
 <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
 <script>
-  // Initialize map in English
   const map = L.map('map').setView([54.5, -3], 5);
   L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
       attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OSM</a>',
@@ -69,7 +68,6 @@
       maxZoom: 19
   }).addTo(map);
 
-  // Icons
   const cityIcon = new L.Icon({
       iconUrl: 'https://maps.google.com/mapfiles/ms/icons/blue-dot.png',
       iconSize: [32, 32],
@@ -83,7 +81,6 @@
       popupAnchor: [0, -30]
   });
 
-  // UK city coordinates
   const cityCoords = {
       "London": [51.5074, -0.1278],
       "Manchester": [53.4808, -2.2426],
@@ -100,7 +97,6 @@
 
   let markers = [];
 
-  // Country selector
   const countrySelector = document.getElementById('country');
   const ukControls = document.getElementById('ukControls');
 
@@ -116,22 +112,19 @@
       }
   });
 
-  // Show chargers
   document.getElementById('showBtn').addEventListener('click', async () => {
       const city = document.getElementById('city').value;
       if (!city) return alert('Please select a city or option');
 
-      // Clear existing markers
       markers.forEach(m => map.removeLayer(m));
       markers = [];
 
-      let lat, lon, zoom, distance;
+      let lat = 54.5, lon = -3, zoom = 5, distance = 25;
       const isMotorway = city === "Motorways";
 
-      if (isMotorway) {
-          lat = 52.5; lon = -1.5;
-          zoom = 6; distance = 100;
-      } else {
+      if(isMotorway){
+          lat = 52.5; lon = -1.5; distance = 100; zoom = 6;
+      } else if(cityCoords[city]){
           [lat, lon] = cityCoords[city];
           zoom = 11; distance = 25;
       }
@@ -140,36 +133,36 @@
 
       try {
           const res = await fetch(`/api/getUKChargers?lat=${lat}&lon=${lon}&distance=${distance}`);
+          if(!res.ok) throw new Error('Failed fetch');
           const data = await res.json();
 
           if (!data.length) return alert('No chargers found for this selection');
 
           data.forEach(point => {
-              if (point.StatusType && point.StatusType.IsOperational) {
-                  const lat = point.AddressInfo.Latitude;
-                  const lon = point.AddressInfo.Longitude;
+              if(point.StatusType && point.StatusType.IsOperational){
+                  const plat = point.AddressInfo.Latitude;
+                  const plon = point.AddressInfo.Longitude;
                   const title = point.AddressInfo.Title || "EV Charger";
                   const town = point.AddressInfo.Town || "";
                   const address = point.AddressInfo.AddressLine1 || "";
                   const postcode = point.AddressInfo.Postcode || "";
-                  const gmapsUrl = `https://www.google.com/maps/dir/?api=1&destination=${lat},${lon}`;
+                  const gmapsUrl = `https://www.google.com/maps/dir/?api=1&destination=${plat},${plon}`;
                   const iconType = isMotorway ? motorwayIcon : cityIcon;
 
                   const popupContent = `<b>${title}</b><br>${town}<br>${address}<br>${postcode}<br>
                                         <a href="${gmapsUrl}" target="_blank">📍 Get Directions</a>`;
 
-                  const marker = L.marker([lat, lon], { icon: iconType }).addTo(map);
+                  const marker = L.marker([plat, plon], { icon: iconType }).addTo(map);
                   marker.bindPopup(popupContent);
                   markers.push(marker);
               }
           });
-      } catch(err) {
-          alert('Error loading EV chargers. Try again later.');
+      } catch(err){
           console.error(err);
+          alert('Error loading EV chargers. Try again later.');
       }
   });
 
-  // Subscribe
   document.getElementById('subscribeBtn').addEventListener('click', () => {
       const email = document.getElementById('email').value;
       if (!email) return alert('Please enter your email');
@@ -177,9 +170,8 @@
       document.getElementById('email').value = '';
   });
 
-  // Legend
   const legend = L.control({position: 'bottomright'});
-  legend.onAdd = function(map) {
+  legend.onAdd = function(map){
       const div = L.DomUtil.create('div', 'info legend');
       div.style.backgroundColor = 'white';
       div.style.padding = '8px';
@@ -191,7 +183,6 @@
       return div;
   };
   legend.addTo(map);
-
 </script>
 </body>
 </html>
