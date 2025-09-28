@@ -1,31 +1,62 @@
 // api/getUKChargers.js
 export default async function handler(req, res) {
   try {
-    // Extract query parameters and provide defaults
-    let { lat, lon, distance } = req.query;
-    lat = lat || 54.5;       // UK center default
-    lon = lon || -3;
-    distance = distance || 25;
-
-    console.log("Request received with:", { lat, lon, distance });
-
     const apiKey = "9e32798c-5e2f-4146-bb18-5870fd74e0ec";
 
-    const response = await fetch(
-      `https://api.openchargemap.io/v3/poi/?output=json&countrycode=GB&latitude=${lat}&longitude=${lon}&maxresults=500&distance=${distance}&distanceunit=KM&key=${apiKey}`
-    );
+    let { city, isMotorway } = req.query;
+    city = city || "London";
+    isMotorway = isMotorway === "true";
 
-    if (!response.ok) {
-      console.error("OpenChargeMap API returned status:", response.status);
-      return res.status(response.status).json({ error: "OpenChargeMap API error" });
+    console.log('Request received for:', { city, isMotorway });
+
+    // Predefined coordinate grids for major UK cities
+    const cityGrids = {
+      "London": [
+        [51.5074, -0.1278], [51.515, -0.15], [51.52, -0.11], [51.50, -0.18]
+      ],
+      "Manchester": [
+        [53.4808, -2.2426], [53.485, -2.25], [53.475, -2.23]
+      ],
+      "Birmingham": [
+        [52.4862, -1.8904], [52.49, -1.90], [52.48, -1.88]
+      ],
+      "Edinburgh": [
+        [55.9533, -3.1883], [55.96, -3.20], [55.95, -3.17]
+      ],
+      // add other cities similarly...
+    };
+
+    // Default grid for motorways (multiple points across UK)
+    const motorwayGrid = [
+      [51, -1], [52, -2], [53, -3], [54, -2], [55, -1]
+    ];
+
+    const points = isMotorway ? motorwayGrid : (cityGrids[city] || [[54.5, -3]]);
+
+    // Function to fetch chargers for given coordinates
+    async function fetchChargers(lat, lon, distance=25) {
+      const response = await fetch(
+        `https://api.openchargemap.io/v3/poi/?output=json&countrycode=GB&latitude=${lat}&longitude=${lon}&maxresults=500&distance=${distance}&distanceunit=KM&key=${apiKey}`
+      );
+      if (!response.ok) throw new Error(`OpenChargeMap API error: ${response.status}`);
+      return response.json();
     }
 
-    const data = await response.json();
-    console.log("Data received from OpenChargeMap:", data.length, "entries");
+    let allData = [];
 
-    res.status(200).json(data);
+    for (let [lat, lon] of points) {
+      const data = await fetchChargers(lat, lon, isMotorway ? 50 : 25);
+      allData = allData.concat(data);
+    }
+
+    // Remove duplicates based on Latitude + Longitude
+    const uniqueData = Array.from(new Map(allData.map(item => [`${item.AddressInfo.Latitude}-${item.AddressInfo.Longitude}`, item])).values());
+
+    console.log('Total unique chargers:', uniqueData.length);
+    res.status(200).json(uniqueData);
+
   } catch (err) {
-    console.error("Serverless function error:", err);
-    res.status(500).json({ error: "Failed to fetch data from OpenChargeMap" });
+    console.error('Serverless function error:', err);
+    res.status(500).json({ error: 'Failed to fetch data from OpenChargeMap' });
   }
 }
