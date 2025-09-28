@@ -39,11 +39,6 @@ select, button, input { padding:0.5rem; margin:0.3rem; }
     <option value="Glasgow">Glasgow</option>
     <option value="Liverpool">Liverpool</option>
     <option value="Edinburgh">Edinburgh</option>
-    <option value="Leeds">Leeds</option>
-    <option value="Bristol">Bristol</option>
-    <option value="Sheffield">Sheffield</option>
-    <option value="Cardiff">Cardiff</option>
-    <option value="Newcastle">Newcastle</option>
     <option value="Motorways">UK Motorways & Major Roads</option>
   </select>
   <button id="showBtn">Show Chargers</button>
@@ -62,7 +57,7 @@ select, button, input { padding:0.5rem; margin:0.3rem; }
 <script>
 const map = L.map('map').setView([54.5,-3],5);
 L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png',{
-    attribution:'&copy; <a href="https://www.openstreetmap.org/copyright">OSM</a>',
+    attribution:'&copy; OpenStreetMap',
     subdomains:'abcd', maxZoom:19
 }).addTo(map);
 
@@ -108,25 +103,21 @@ document.getElementById('showBtn').addEventListener('click',async()=>{
             if(point.AddressInfo && point.AddressInfo.Latitude && point.AddressInfo.Longitude){
                 const plat=point.AddressInfo.Latitude;
                 const plon=point.AddressInfo.Longitude;
-                if(!point.StatusType || point.StatusType.IsOperational){
-                    const title=point.AddressInfo.Title||"EV Charger";
-                    const town=point.AddressInfo.Town||"";
-                    const address=point.AddressInfo.AddressLine1||"";
-                    const postcode=point.AddressInfo.Postcode||"";
-                    const gmapsUrl=`https://www.google.com/maps/dir/?api=1&destination=${plat},${plon}`;
-                    const iconType=city==="Motorways"?motorwayIcon:cityIcon;
+                const title=point.AddressInfo.Title||"EV Charger";
+                const town=point.AddressInfo.Town||"";
+                const address=point.AddressInfo.AddressLine1||"";
+                const postcode=point.AddressInfo.Postcode||"";
+                const gmapsUrl=`https://www.google.com/maps/dir/?api=1&destination=${plat},${plon}`;
+                const iconType=city==="Motorways"?motorwayIcon:cityIcon;
 
-                    const marker=L.marker([plat,plon],{icon:iconType}).addTo(map);
-                    marker.bindPopup(`<b>${title}</b><br>${town}<br>${address}<br>${postcode}<br><a href="${gmapsUrl}" target="_blank">📍 Get Directions</a>`);
-                    markers.push(marker);
-                }
+                const marker=L.marker([plat,plon],{icon:iconType}).addTo(map);
+                marker.bindPopup(`<b>${title}</b><br>${town}<br>${address}<br>${postcode}<br><a href="${gmapsUrl}" target="_blank">📍 Get Directions</a>`);
+                markers.push(marker);
             }
         });
 
-        if(city!=="Motorways" && data.length){
-            const first=data[0];
-            map.setView([first.AddressInfo.Latitude,first.AddressInfo.Longitude],11);
-        }
+        // center map on first point
+        if(data.length) map.setView([data[0].AddressInfo.Latitude,data[0].AddressInfo.Longitude],11);
 
     } catch(err){ console.error(err); alert('Error loading EV chargers. Try again later.'); }
 });

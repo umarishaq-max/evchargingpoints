@@ -1,58 +1,33 @@
 // api/getUKChargers.js
-export default async function handler(req, res) {
-  try {
-    const { city } = req.query;
-    const apiKey = "9e32798c-5e2f-4146-bb18-5870fd74e0ec";
-    let distance = 10; // larger radius for better coverage
-    console.log('Fetching chargers for:', city);
+export default function handler(req, res) {
+  const { city } = req.query;
 
-    const cityGrids = {
-      "London": [
-        [51.5074, -0.1278],[51.515, -0.14],[51.49, -0.1],[51.52, -0.12],
-        [51.53, -0.09],[51.50, -0.15],[51.48, -0.13],[51.51, -0.11],
-        [51.55, -0.2],[51.46, -0.05]
-      ],
-      "Manchester": [
-        [53.4808, -2.2426],[53.49, -2.25],[53.47, -2.24],[53.48, -2.23]
-      ],
-      "Birmingham": [
-        [52.4862, -1.8904],[52.49, -1.88],[52.48, -1.89],[52.485, -1.87]
-      ],
-      "Glasgow": [[55.8642, -4.2518],[55.86, -4.25],[55.87, -4.26]],
-      "Liverpool": [[53.4084, -2.9916],[53.41, -2.99],[53.40, -2.98]],
-      "Edinburgh": [[55.9533, -3.1883],[55.95, -3.19],[55.96, -3.18]],
-      "Leeds": [[53.8008, -1.5491],[53.81, -1.55],[53.79, -1.54]],
-      "Bristol": [[51.4545, -2.5879],[51.45, -2.58],[51.46, -2.59]],
-      "Sheffield": [[53.3811, -1.4701],[53.38, -1.46],[53.39, -1.48]],
-      "Cardiff": [[51.4816, -3.1791],[51.48, -3.18],[51.49, -3.17]],
-      "Newcastle": [[54.9784, -1.6174],[54.97, -1.61],[54.98, -1.62]],
-      "Motorways": [
-        [51, -1],[52, -2],[53, -3],[54, -2],[55, -1],
-        [53.5, -1.5],[54.5, -0.5],[55, -2],[52.5, -0.5],[53.5, -0.5],[54, -1.5]
-      ]
-    };
+  // Sample charger data for demonstration
+  const sampleData = {
+    "London": [
+      { AddressInfo: { Latitude: 51.5074, Longitude: -0.1278, Title: "London Central Charger", AddressLine1: "10 Trafalgar Square", Town: "London", Postcode: "WC2N 5DN" }, StatusType: { IsOperational: true } },
+      { AddressInfo: { Latitude: 51.515, Longitude: -0.14, Title: "London West Charger", AddressLine1: "20 Oxford Street", Town: "London", Postcode: "W1D 1AN" }, StatusType: { IsOperational: true } }
+    ],
+    "Manchester": [
+      { AddressInfo: { Latitude: 53.4808, Longitude: -2.2426, Title: "Manchester Central Charger", AddressLine1: "1 St Peter's Square", Town: "Manchester", Postcode: "M2 3BG" }, StatusType: { IsOperational: true } }
+    ],
+    "Birmingham": [
+      { AddressInfo: { Latitude: 52.4862, Longitude: -1.8904, Title: "Birmingham Central Charger", AddressLine1: "100 Bull Street", Town: "Birmingham", Postcode: "B4 6AF" }, StatusType: { IsOperational: true } }
+    ],
+    "Glasgow": [
+      { AddressInfo: { Latitude: 55.8642, Longitude: -4.2518, Title: "Glasgow Central Charger", AddressLine1: "50 George Square", Town: "Glasgow", Postcode: "G2 1DU" }, StatusType: { IsOperational: true } }
+    ],
+    "Liverpool": [
+      { AddressInfo: { Latitude: 53.4084, Longitude: -2.9916, Title: "Liverpool Central Charger", AddressLine1: "10 Church Street", Town: "Liverpool", Postcode: "L1 3AY" }, StatusType: { IsOperational: true } }
+    ],
+    "Edinburgh": [
+      { AddressInfo: { Latitude: 55.9533, Longitude: -3.1883, Title: "Edinburgh Central Charger", AddressLine1: "1 Princes Street", Town: "Edinburgh", Postcode: "EH2 2EQ" }, StatusType: { IsOperational: true } }
+    ],
+    "Motorways": [
+      { AddressInfo: { Latitude: 51.5, Longitude: -0.5, Title: "M1 Motorway Charger", AddressLine1: "M1 Service Area", Town: "Hertfordshire", Postcode: "AL9 5AA" }, StatusType: { IsOperational: true } },
+      { AddressInfo: { Latitude: 53.0, Longitude: -2.0, Title: "M6 Motorway Charger", AddressLine1: "M6 Service Area", Town: "Cheshire", Postcode: "CW9 7AA" }, StatusType: { IsOperational: true } }
+    ]
+  };
 
-    const points = cityGrids[city] || [[54.5, -3]];
-    let allData = [];
-
-    for (let [lat, lon] of points) {
-      const response = await fetch(
-        `https://api.openchargemap.io/v3/poi/?output=json&countrycode=GB&latitude=${lat}&longitude=${lon}&maxresults=500&distance=${distance}&distanceunit=KM&key=${apiKey}`
-      );
-      if (!response.ok) throw new Error(`OpenChargeMap API error: ${response.status}`);
-      const data = await response.json();
-      allData = allData.concat(data);
-    }
-
-    // Remove duplicates by lat+lon
-    const uniqueData = Array.from(
-      new Map(allData.map(item => [`${item.AddressInfo?.Latitude}-${item.AddressInfo?.Longitude}`, item]))
-      .values()
-    );
-
-    res.status(200).json(uniqueData);
-  } catch (err) {
-    console.error('Serverless function error:', err);
-    res.status(500).json({ error: 'Failed to fetch data from OpenChargeMap' });
-  }
+  res.status(200).json(sampleData[city] || []);
 }
