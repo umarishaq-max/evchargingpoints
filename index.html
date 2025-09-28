@@ -10,7 +10,7 @@
   header { background: #1a73e8; color: white; padding: 1rem; text-align: center; }
   h1 { margin: 0; font-size: 1.8rem; }
   #map { height: 75vh; width: 100%; }
-  .controls { padding: 1rem; text-align: center; display: none; }
+  .controls { padding: 1rem; text-align: center; display: block; }
   select, button, input { padding: 0.5rem; margin: 0.3rem; }
   .coming-soon { padding: 1rem; text-align: center; background: #f2f2f2; }
   .legend i { display: inline-block; width: 20px; height: 20px; margin-right: 6px; }
@@ -61,7 +61,7 @@
 
 <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
 <script>
-  // Initialize map with English tiles
+  // Initialize map in English
   const map = L.map('map').setView([54.5, -3], 5);
   L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
       attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OSM</a>',
@@ -98,7 +98,6 @@
       "Newcastle": [54.9784, -1.6174]
   };
 
-  const apiKey = "9e32798c-5e2f-4146-bb18-5870fd74e0ec";
   let markers = [];
 
   // Country selector
@@ -117,12 +116,12 @@
       }
   });
 
-  // Show chargers for selected UK city or motorways
+  // Show chargers
   document.getElementById('showBtn').addEventListener('click', async () => {
       const city = document.getElementById('city').value;
       if (!city) return alert('Please select a city or option');
 
-      // Remove existing markers
+      // Clear existing markers
       markers.forEach(m => map.removeLayer(m));
       markers = [];
 
@@ -140,7 +139,7 @@
       map.setView([lat, lon], zoom);
 
       try {
-          const res = await fetch(`https://api.openchargemap.io/v3/poi/?output=json&countrycode=GB&latitude=${lat}&longitude=${lon}&maxresults=500&distance=${distance}&distanceunit=KM&key=${apiKey}`);
+          const res = await fetch(`/api/getUKChargers?lat=${lat}&lon=${lon}&distance=${distance}`);
           const data = await res.json();
 
           if (!data.length) return alert('No chargers found for this selection');
@@ -170,7 +169,7 @@
       }
   });
 
-  // Subscribe form
+  // Subscribe
   document.getElementById('subscribeBtn').addEventListener('click', () => {
       const email = document.getElementById('email').value;
       if (!email) return alert('Please enter your email');
