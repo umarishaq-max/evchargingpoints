@@ -1,16 +1,17 @@
 // api/getUKChargers.js
 export default async function handler(req, res) {
   try {
-    let { city } = req.query;
-    let distance = 5; // radius per grid point
+    const { city } = req.query;
     const apiKey = "9e32798c-5e2f-4146-bb18-5870fd74e0ec";
+    let distance = 10; // increased radius for better coverage
+    console.log('Fetching chargers for:', city);
 
-    console.log('Fetching chargers for city/motorway:', city);
-
-    // Predefined grids for all major UK cities + motorway coverage
+    // Predefined grids for major UK cities + motorways
     const cityGrids = {
       "London": [
-        [51.5074, -0.1278],[51.515, -0.14],[51.49, -0.1],[51.52, -0.12],[51.53, -0.09],[51.50, -0.15],[51.48, -0.13],[51.51, -0.11]
+        [51.5074, -0.1278],[51.515, -0.14],[51.49, -0.1],[51.52, -0.12],
+        [51.53, -0.09],[51.50, -0.15],[51.48, -0.13],[51.51, -0.11],
+        [51.55, -0.2],[51.46, -0.05]
       ],
       "Manchester": [
         [53.4808, -2.2426],[53.49, -2.25],[53.47, -2.24],[53.48, -2.23]
@@ -18,36 +19,21 @@ export default async function handler(req, res) {
       "Birmingham": [
         [52.4862, -1.8904],[52.49, -1.88],[52.48, -1.89],[52.485, -1.87]
       ],
-      "Glasgow": [
-        [55.8642, -4.2518],[55.86, -4.25],[55.87, -4.26]
-      ],
-      "Liverpool": [
-        [53.4084, -2.9916],[53.41, -2.99],[53.40, -2.98]
-      ],
-      "Edinburgh": [
-        [55.9533, -3.1883],[55.95, -3.19],[55.96, -3.18]
-      ],
-      "Leeds": [
-        [53.8008, -1.5491],[53.81, -1.55],[53.79, -1.54]
-      ],
-      "Bristol": [
-        [51.4545, -2.5879],[51.45, -2.58],[51.46, -2.59]
-      ],
-      "Sheffield": [
-        [53.3811, -1.4701],[53.38, -1.46],[53.39, -1.48]
-      ],
-      "Cardiff": [
-        [51.4816, -3.1791],[51.48, -3.18],[51.49, -3.17]
-      ],
-      "Newcastle": [
-        [54.9784, -1.6174],[54.97, -1.61],[54.98, -1.62]
-      ],
+      "Glasgow": [[55.8642, -4.2518],[55.86, -4.25],[55.87, -4.26]],
+      "Liverpool": [[53.4084, -2.9916],[53.41, -2.99],[53.40, -2.98]],
+      "Edinburgh": [[55.9533, -3.1883],[55.95, -3.19],[55.96, -3.18]],
+      "Leeds": [[53.8008, -1.5491],[53.81, -1.55],[53.79, -1.54]],
+      "Bristol": [[51.4545, -2.5879],[51.45, -2.58],[51.46, -2.59]],
+      "Sheffield": [[53.3811, -1.4701],[53.38, -1.46],[53.39, -1.48]],
+      "Cardiff": [[51.4816, -3.1791],[51.48, -3.18],[51.49, -3.17]],
+      "Newcastle": [[54.9784, -1.6174],[54.97, -1.61],[54.98, -1.62]],
       "Motorways": [
-        [51, -1],[52, -2],[53, -3],[54, -2],[55, -1],[53.5, -1.5],[54.5, -0.5],[55, -2],[52.5, -0.5]
+        [51, -1],[52, -2],[53, -3],[54, -2],[55, -1],[53.5, -1.5],
+        [54.5, -0.5],[55, -2],[52.5, -0.5],[53.5, -0.5],[54, -1.5]
       ]
     };
 
-    const points = cityGrids[city] || [[54.5, -3]]; // fallback UK center
+    const points = cityGrids[city] || [[54.5, -3]]; // default UK center
     let allData = [];
 
     for (let [lat, lon] of points) {
@@ -59,12 +45,13 @@ export default async function handler(req, res) {
       allData = allData.concat(data);
     }
 
-    // Remove duplicates by lat+lon
-    const uniqueData = Array.from(new Map(allData.map(item => [`${item.AddressInfo.Latitude}-${item.AddressInfo.Longitude}`, item])).values());
-    console.log('Total unique chargers:', uniqueData.length);
+    // Remove duplicates
+    const uniqueData = Array.from(
+      new Map(allData.map(item => [`${item.AddressInfo.Latitude}-${item.AddressInfo.Longitude}`, item]))
+      .values()
+    );
 
     res.status(200).json(uniqueData);
-
   } catch (err) {
     console.error('Serverless function error:', err);
     res.status(500).json({ error: 'Failed to fetch data from OpenChargeMap' });
