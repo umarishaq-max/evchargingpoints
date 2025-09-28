@@ -1,0 +1,32 @@
+// api/getUKChargers.js
+export default function handler(req, res) {
+  const { city } = req.query;
+
+  const sampleData = {
+    "London": [
+      { AddressInfo: { Latitude: 51.5074, Longitude: -0.1278, Title: "London Central Charger", AddressLine1: "10 Trafalgar Square", Town: "London", Postcode: "WC2N 5DN" }, StatusType: { IsOperational: true } },
+      { AddressInfo: { Latitude: 51.515, Longitude: -0.14, Title: "London West Charger", AddressLine1: "20 Oxford Street", Town: "London", Postcode: "W1D 1AN" }, StatusType: { IsOperational: true } }
+    ],
+    "Manchester": [
+      { AddressInfo: { Latitude: 53.4808, Longitude: -2.2426, Title: "Manchester Central Charger", AddressLine1: "1 St Peter's Square", Town: "Manchester", Postcode: "M2 3BG" }, StatusType: { IsOperational: true } }
+    ],
+    "Birmingham": [
+      { AddressInfo: { Latitude: 52.4862, Longitude: -1.8904, Title: "Birmingham Central Charger", AddressLine1: "100 Bull Street", Town: "Birmingham", Postcode: "B4 6AF" }, StatusType: { IsOperational: true } }
+    ],
+    "Glasgow": [
+      { AddressInfo: { Latitude: 55.8642, Longitude: -4.2518, Title: "Glasgow Central Charger", AddressLine1: "50 George Square", Town: "Glasgow", Postcode: "G2 1DU" }, StatusType: { IsOperational: true } }
+    ],
+    "Liverpool": [
+      { AddressInfo: { Latitude: 53.4084, Longitude: -2.9916, Title: "Liverpool Central Charger", AddressLine1: "10 Church Street", Town: "Liverpool", Postcode: "L1 3AY" }, StatusType: { IsOperational: true } }
+    ],
+    "Edinburgh": [
+      { AddressInfo: { Latitude: 55.9533, Longitude: -3.1883, Title: "Edinburgh Central Charger", AddressLine1: "1 Princes Street", Town: "Edinburgh", Postcode: "EH2 2EQ" }, StatusType: { IsOperational: true } }
+    ],
+    "Motorways": [
+      { AddressInfo: { Latitude: 51.5, Longitude: -0.5, Title: "M1 Motorway Charger", AddressLine1: "M1 Service Area", Town: "Hertfordshire", Postcode: "AL9 5AA" }, StatusType: { IsOperational: true } },
+      { AddressInfo: { Latitude: 53.0, Longitude: -2.0, Title: "M6 Motorway Charger", AddressLine1: "M6 Service Area", Town: "Cheshire", Postcode: "CW9 7AA" }, StatusType: { IsOperational: true } }
+    ]
+  };
+
+  res.status(200).json(sampleData[city] || []);
+}
