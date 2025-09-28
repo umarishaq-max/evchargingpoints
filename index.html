@@ -23,7 +23,7 @@
   <div style="text-align:center; margin-top:10px;">
     <label for="country">Select Country:</label>
     <select id="country">
-      <option value="UK">UK</option>
+      <option value="UK" selected>UK</option>
       <option value="UAE">UAE</option>
       <option value="KSA">Saudi Arabia</option>
     </select>
@@ -61,25 +61,29 @@
 
 <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
 <script>
-  const map = L.map('map').setView([20, 0], 2);
-  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-      attribution: '© OpenStreetMap contributors'
+  // Initialize map with English tiles
+  const map = L.map('map').setView([54.5, -3], 5);
+  L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
+      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OSM</a>',
+      subdomains: 'abcd',
+      maxZoom: 19
   }).addTo(map);
 
+  // Icons
   const cityIcon = new L.Icon({
-    iconUrl: 'https://maps.google.com/mapfiles/ms/icons/blue-dot.png',
-    iconSize: [32, 32],
-    iconAnchor: [16, 32],
-    popupAnchor: [0, -30]
+      iconUrl: 'https://maps.google.com/mapfiles/ms/icons/blue-dot.png',
+      iconSize: [32, 32],
+      iconAnchor: [16, 32],
+      popupAnchor: [0, -30]
   });
-
   const motorwayIcon = new L.Icon({
-    iconUrl: 'https://maps.google.com/mapfiles/ms/icons/green-dot.png',
-    iconSize: [32, 32],
-    iconAnchor: [16, 32],
-    popupAnchor: [0, -30]
+      iconUrl: 'https://maps.google.com/mapfiles/ms/icons/green-dot.png',
+      iconSize: [32, 32],
+      iconAnchor: [16, 32],
+      popupAnchor: [0, -30]
   });
 
+  // UK city coordinates
   const cityCoords = {
       "London": [51.5074, -0.1278],
       "Manchester": [53.4808, -2.2426],
@@ -97,6 +101,7 @@
   const apiKey = "9e32798c-5e2f-4146-bb18-5870fd74e0ec";
   let markers = [];
 
+  // Country selector
   const countrySelector = document.getElementById('country');
   const ukControls = document.getElementById('ukControls');
 
@@ -112,15 +117,17 @@
       }
   });
 
+  // Show chargers for selected UK city or motorways
   document.getElementById('showBtn').addEventListener('click', async () => {
       const city = document.getElementById('city').value;
       if (!city) return alert('Please select a city or option');
 
+      // Remove existing markers
       markers.forEach(m => map.removeLayer(m));
       markers = [];
 
       let lat, lon, zoom, distance;
-      const isMotorway = (city === "Motorways");
+      const isMotorway = city === "Motorways";
 
       if (isMotorway) {
           lat = 52.5; lon = -1.5;
@@ -149,11 +156,8 @@
                   const gmapsUrl = `https://www.google.com/maps/dir/?api=1&destination=${lat},${lon}`;
                   const iconType = isMotorway ? motorwayIcon : cityIcon;
 
-                  const popupContent = isMotorway
-                    ? `<b>${title}</b><br>${town}<br>${address}<br>${postcode}<br>
-                       <a href="${gmapsUrl}" target="_blank">📍 Get Directions</a>`
-                    : `<b>${title}</b><br>${address}<br>${postcode}<br>
-                       <a href="${gmapsUrl}" target="_blank">📍 Get Directions</a>`;
+                  const popupContent = `<b>${title}</b><br>${town}<br>${address}<br>${postcode}<br>
+                                        <a href="${gmapsUrl}" target="_blank">📍 Get Directions</a>`;
 
                   const marker = L.marker([lat, lon], { icon: iconType }).addTo(map);
                   marker.bindPopup(popupContent);
@@ -166,6 +170,7 @@
       }
   });
 
+  // Subscribe form
   document.getElementById('subscribeBtn').addEventListener('click', () => {
       const email = document.getElementById('email').value;
       if (!email) return alert('Please enter your email');
