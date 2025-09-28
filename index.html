@@ -13,7 +13,6 @@
   .controls { padding: 1rem; text-align: center; display: block; }
   select, button, input { padding: 0.5rem; margin: 0.3rem; }
   .coming-soon { padding: 1rem; text-align: center; background: #f2f2f2; }
-  .legend i { display: inline-block; width: 20px; height: 20px; margin-right: 6px; }
 </style>
 </head>
 <body>
@@ -81,22 +80,7 @@
       popupAnchor: [0, -30]
   });
 
-  const cityCoords = {
-      "London": [51.5074, -0.1278],
-      "Manchester": [53.4808, -2.2426],
-      "Birmingham": [52.4862, -1.8904],
-      "Glasgow": [55.8642, -4.2518],
-      "Liverpool": [53.4084, -2.9916],
-      "Edinburgh": [55.9533, -3.1883],
-      "Leeds": [53.8008, -1.5491],
-      "Bristol": [51.4545, -2.5879],
-      "Sheffield": [53.3811, -1.4701],
-      "Cardiff": [51.4816, -3.1791],
-      "Newcastle": [54.9784, -1.6174]
-  };
-
   let markers = [];
-
   const countrySelector = document.getElementById('country');
   const ukControls = document.getElementById('ukControls');
 
@@ -119,20 +103,10 @@
       markers.forEach(m => map.removeLayer(m));
       markers = [];
 
-      let lat = 54.5, lon = -3, zoom = 5, distance = 25;
-      const isMotorway = city === "Motorways";
-
-      if(isMotorway){
-          lat = 52.5; lon = -1.5; distance = 100; zoom = 6;
-      } else if(cityCoords[city]){
-          [lat, lon] = cityCoords[city];
-          zoom = 11; distance = 25;
-      }
-
-      map.setView([lat, lon], zoom);
+      map.setView([54.5, -3], 5); // reset view initially
 
       try {
-          const res = await fetch(`/api/getUKChargers?lat=${lat}&lon=${lon}&distance=${distance}`);
+          const res = await fetch(`/api/getUKChargers?city=${city}`);
           if(!res.ok) throw new Error('Failed fetch');
           const data = await res.json();
 
@@ -147,16 +121,19 @@
                   const address = point.AddressInfo.AddressLine1 || "";
                   const postcode = point.AddressInfo.Postcode || "";
                   const gmapsUrl = `https://www.google.com/maps/dir/?api=1&destination=${plat},${plon}`;
-                  const iconType = isMotorway ? motorwayIcon : cityIcon;
-
-                  const popupContent = `<b>${title}</b><br>${town}<br>${address}<br>${postcode}<br>
-                                        <a href="${gmapsUrl}" target="_blank">📍 Get Directions</a>`;
+                  const iconType = city === "Motorways" ? motorwayIcon : cityIcon;
 
                   const marker = L.marker([plat, plon], { icon: iconType }).addTo(map);
-                  marker.bindPopup(popupContent);
+                  marker.bindPopup(`<b>${title}</b><br>${town}<br>${address}<br>${postcode}<br><a href="${gmapsUrl}" target="_blank">📍 Get Directions</a>`);
                   markers.push(marker);
               }
           });
+
+          if(city !== "Motorways" && data.length) {
+              const first = data[0];
+              map.setView([first.AddressInfo.Latitude, first.AddressInfo.Longitude], 11);
+          }
+
       } catch(err){
           console.error(err);
           alert('Error loading EV chargers. Try again later.');
@@ -169,20 +146,6 @@
       alert(`Thanks! We'll notify you at ${email} when we launch in UAE & Saudi Arabia.`);
       document.getElementById('email').value = '';
   });
-
-  const legend = L.control({position: 'bottomright'});
-  legend.onAdd = function(map){
-      const div = L.DomUtil.create('div', 'info legend');
-      div.style.backgroundColor = 'white';
-      div.style.padding = '8px';
-      div.style.borderRadius = '5px';
-      div.style.boxShadow = '0 0 6px rgba(0,0,0,0.3)';
-      div.innerHTML = `<h4>Legend</h4>
-                       <i style="background: url('https://maps.google.com/mapfiles/ms/icons/blue-dot.png') no-repeat; width: 20px; height: 20px;"></i> City Charger<br>
-                       <i style="background: url('https://maps.google.com/mapfiles/ms/icons/green-dot.png') no-repeat; width: 20px; height: 20px;"></i> Motorway Charger`;
-      return div;
-  };
-  legend.addTo(map);
 </script>
 </body>
 </html>
